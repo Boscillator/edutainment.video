@@ -97,6 +97,6 @@ export class AudioFile {
     }
 
     const transcript = new Transcript(response.results);
-    console.log(JSON.stringify(transcript, null, 4));
+    return transcript;
   }
 }

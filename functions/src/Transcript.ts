@@ -43,7 +43,10 @@ export class Transcript {
     }
   }
 
+  /**
+   * Gets a list of words to synchronize media changes to.
+   */
   pickKeyWords() {
-    return this.words.filter((w,i) => i === 0 || Math.random() > 0.4);
+    return this.words.filter((w,i) => i === 0 || Math.random() < 0.05);
   }
 }
