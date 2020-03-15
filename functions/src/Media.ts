@@ -8,8 +8,8 @@ import axios from 'axios';
 
 const UNSPLASH_BASE = 'https://api.unsplash.com';
 
-class Media {
-  private path: string | null = null;
+export class Media {
+  private _path: string | null = null;
 
   constructor(private url: string) {
   }
@@ -22,18 +22,26 @@ class Media {
 
     const id = uuidv4();
     const ext = mime.extension(resp.headers['content-type']);
-    this.path = path.join(os.tmpdir(), id + '.' + ext);
-    console.log(`Downloading media ${this.url} to ${this.path}`);
-    await fs.promises.writeFile(this.path, resp.data);
+    this._path = path.join(os.tmpdir(), id + '.' + ext);
+    console.log(`Downloading media ${this.url} to ${this._path}`);
+    await fs.promises.writeFile(this._path, resp.data);
   }
 
   async delete() {
-    if (!this.path) {
+    if (!this._path) {
       throw Error("Cannot delete media that has not been downloaded");
     }
-    fs.unlinkSync(this.path);
-    this.path = null;
+    fs.unlinkSync(this._path);
+    this._path = null;
   }
+
+  get path(): string {
+    if(!this._path) {
+      throw Error("Cannot use media file that has not been downloaded.");
+    }
+    return this._path;
+  }
+
 }
 
 abstract class MediaSource {

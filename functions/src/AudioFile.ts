@@ -2,7 +2,6 @@ import * as path from "path";
 import * as os from "os";
 import * as fs from "fs";
 import * as admin from "firebase-admin";
-import * as ffmpegPath from 'ffmpeg-static'
 import * as ffmpeg from 'fluent-ffmpeg'
 import * as speech from '@google-cloud/speech';
 import {Transcript} from "./Transcript";
@@ -12,42 +11,41 @@ const SAMPLE_RATE = 48000;
 const ENCODING: "LINEAR16" = "LINEAR16";
 const LANGUAGE = 'en-US';
 
-ffmpeg.setFfmpegPath(ffmpegPath);
 const speechClient = new speech.SpeechClient();
 
 export class FFMPEGError extends Error {}
 
 export class AudioFile {
-  private path: string | null = null;
+  private _path: string | null = null;
 
   constructor(private bucket: string, private name: string) {
   }
 
   async download() {
-    if (this.path) {
+    if (this._path) {
       throw Error(`Attempted to re-download audio file.`);
     }
 
     console.log(`Downloading ${this.name}`);
-    this.path = path.join(os.tmpdir(), path.basename(this.name));
+    this._path = path.join(os.tmpdir(), path.basename(this.name));
     await admin.storage()
       .bucket(this.bucket)
       .file(this.name)
-      .download({destination: this.path})
+      .download({destination: this._path})
   }
 
   normalize() {
     return new Promise((resolve, reject) => {
       console.log(`Starting normalize on ${this.name}`);
 
-      if(!this.path) {
+      if(!this._path) {
         throw Error("Cannot normalize file that isn't downloaded.");
       }
 
-      const oldPath = this.path;
+      const oldPath = this._path;
       const newPath = path.join(os.tmpdir(), path.basename(this.name, path.extname(this.name)) + '.conv.wav');
       ffmpeg()
-        .input(this.path)
+        .input(this._path)
         .audioCodec(AUDIO_CODEC)
         .audioFrequency(SAMPLE_RATE)
         .audioChannels(1)
@@ -59,8 +57,8 @@ export class AudioFile {
         .on('end',() => {
           console.log("Normalization Completed");
           fs.unlinkSync(oldPath);
-          this.path = newPath;
-          console.log(this.path);
+          this._path = newPath;
+          console.log(this._path);
           resolve();
       });
     });
@@ -68,7 +66,7 @@ export class AudioFile {
 
   async transcribe() {
     console.log(`Transcribing ${this.name}`);
-    if(!this.path) {
+    if(!this._path) {
       throw Error("Cannot transcribe file that isn't downloaded.");
     }
 
@@ -80,7 +78,7 @@ export class AudioFile {
     };
 
     const audio = {
-      content: fs.readFileSync(this.path).toString('base64')
+      content: fs.readFileSync(this._path).toString('base64')
     };
 
     const request = { config, audio};
@@ -98,5 +96,35 @@ export class AudioFile {
 
     const transcript = new Transcript(response.results);
     return transcript;
+  }
+
+  duration(): Promise<number> {
+    console.log(`Fetching duration of ${this.name}`);
+    return new Promise<number>(((resolve, reject) => {
+      if(!this._path) {
+        throw Error("Cannot get duration of file not downloaded");
+      }
+      ffmpeg.ffprobe(this._path, function(err, metadata) {
+        if(err) {
+          console.error("FFProbe error");
+          reject(new FFMPEGError(err));
+        }
+        const dur = metadata.streams[0].duration;
+        if(typeof dur === 'undefined' || !dur) {
+          console.error("No duration on stream");
+          reject(new Error("No duration on stream"));
+          return
+        }
+        console.log(`Successfully calculated duration to be ${dur}`);
+        resolve(parseFloat(dur));
+      });
+    }));
+  }
+
+  get path(): string {
+    if(!this._path) {
+      throw Error("Cannot get path of non-downloaded audio file");
+    }
+    return this._path;
   }
 }
