@@ -42,4 +42,8 @@ export class Transcript {
       }
     }
   }
+
+  pickKeyWords() {
+    return this.words.filter((w,i) => i === 0 || Math.random() > 0.4);
+  }
 }
