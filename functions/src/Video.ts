@@ -42,6 +42,7 @@ export class Video {
 
   save(): Promise<void> {
     return new Promise<void>(async (resolve, reject) => {
+      console.log("Generating video file");
       const images = [];
       for (let i = 0; i < this.media.length; i++) {
         images.push({
@@ -49,6 +50,7 @@ export class Video {
           loop: await this.getDuration(i)
         })
       }
+      console.log("Videoshow started");
       videoshow(images)
         .audio(this.audio.path)
         .save(this.path)

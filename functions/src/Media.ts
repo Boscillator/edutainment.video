@@ -14,17 +14,25 @@ export class Media {
   constructor(private url: string) {
   }
 
-  async download() {
-    console.log(`Starting download of ${this.url}`);
-    const resp = await axios.get(this.url, {
-      responseType: 'arraybuffer'
-    });
+  download() {
+    return new Promise((async (resolve, reject) => {
+      console.log(`Starting download of ${this.url}`);
+      const resp = await axios.get(this.url, {
+        responseType: 'arraybuffer'
+      });
 
-    const id = uuidv4();
-    const ext = mime.extension(resp.headers['content-type']);
-    this._path = path.join(os.tmpdir(), id + '.' + ext);
-    console.log(`Downloading media ${this.url} to ${this._path}`);
-    await fs.promises.writeFile(this._path, resp.data);
+      const id = uuidv4();
+      const ext = mime.extension(resp.headers['content-type']);
+      this._path = path.join(os.tmpdir(), id + '.' + ext);
+      console.log(`Downloading media ${this.url} to ${this._path}`);
+      fs.writeFile(this._path, resp.data, (err => {
+        if(err) {
+          reject(err);
+        } else {
+          resolve();
+        }
+      }));
+    }));
   }
 
   async delete() {
