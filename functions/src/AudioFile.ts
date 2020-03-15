@@ -127,4 +127,13 @@ export class AudioFile {
     }
     return this._path;
   }
+
+  delete() {
+    if(!this._path) {
+      throw Error("Cannot delete non-downloaded audio file");
+    }
+    console.log(`Deleting audio from ${this._path}`);
+    fs.unlinkSync(this._path);
+    this._path = null;
+  }
 }

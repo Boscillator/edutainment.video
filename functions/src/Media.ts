@@ -31,6 +31,7 @@ export class Media {
     if (!this._path) {
       throw Error("Cannot delete media that has not been downloaded");
     }
+    console.log(`Deleting media from ${this._path}`);
     fs.unlinkSync(this._path);
     this._path = null;
   }
@@ -41,7 +42,6 @@ export class Media {
     }
     return this._path;
   }
-
 }
 
 abstract class MediaSource {

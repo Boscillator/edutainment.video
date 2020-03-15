@@ -43,6 +43,7 @@ export const generateVideo = functions.storage.object().onFinalize(async (object
 
   const video = new Video(notNullMedia, timings, audio);
   await video.save();
-  console.log(video.path);
+  await video.upload(object.bucket, object.name);
+  console.log("Successfully proceed audio file");
 });
 

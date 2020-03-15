@@ -2,10 +2,12 @@
 import {v4 as uuidv4} from "uuid";
 import * as path from 'path';
 import * as os from 'os';
+import * as fs from 'fs';
 import {Media} from "./Media";
 import {AudioFile, FFMPEGError} from "./AudioFile";
 // @ts-ignore
 import * as videoshow from "videoshow";
+import * as admin from "firebase-admin";
 
 
 const VIDEO_EXTENTION = '.mp4';
@@ -41,7 +43,7 @@ export class Video {
   save(): Promise<void> {
     return new Promise<void>(async (resolve, reject) => {
       const images = [];
-      for(let i = 0; i < this.media.length; i++) {
+      for (let i = 0; i < this.media.length; i++) {
         images.push({
           path: this.media[i].path,
           loop: await this.getDuration(i)
@@ -52,12 +54,26 @@ export class Video {
         .save(this.path)
         .on('end', () => {
           console.log(`Saved video to ${this.path}`);
+          resolve();
         })
         .on('error', (err: any, stdout: any, stderr: any) => {
           console.error("FFMPEG Error:\n" + stderr);
           reject(new FFMPEGError(err));
         })
     });
+  }
+
+  async upload(bucket: string, name: string) {
+    console.log("UPLOAD");
+    const destination = 'processed/videos/' + path.basename(name, path.extname(name)) + '.mp4';
+    console.log(`Uploading video file from ${name} to ${destination}`);
+    await admin.storage().bucket(bucket).upload(this.path, {
+      destination: destination
+    });
+    console.log("Deleting temporary files...");
+    await Promise.all(this.media.map(m => m.delete()));
+    this.audio.delete();
+    fs.unlinkSync(this.path);
   }
 
   get path() {
