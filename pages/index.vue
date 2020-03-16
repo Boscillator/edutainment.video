@@ -1,17 +1,17 @@
 <template>
   <div class="container">
     <h1>Hello world!</h1>
-    <FirebaseFileUpload/>
+    <FileUploadForm />
   </div>
 </template>
 
 <script>
     import Logo from '~/components/Logo.vue'
-    import FirebaseFileUpload from '../components/FirebaseFileUpload'
+    import FileUploadForm from '../components/FileUploadForm'
 
     export default {
         components: {
-            FirebaseFileUpload,
+            FileUploadForm,
             Logo,
         },
     }
