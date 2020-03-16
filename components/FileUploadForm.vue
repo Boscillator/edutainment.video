@@ -6,7 +6,7 @@
         :state="Boolean(file)"
         placeholder="Choose an audio file or drop it here..."
         drop-placeholder="Drop file here..."
-        accept=".wav"
+        accept=".wav,.mp3"
       />
       <b-input-group-append>
         <b-button @click="submit">Upload!</b-button>
